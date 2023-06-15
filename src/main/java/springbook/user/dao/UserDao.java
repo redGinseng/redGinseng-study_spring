@@ -12,10 +12,16 @@ import java.sql.SQLException;
  * - 데이터를 어떻게 등록하고 불러올 것인가
  *
  */
-public abstract class UserDao {
+public class UserDao {
+
+    private ConnectionMaker connectionMaker;
+
+    public UserDao(){
+        connectionMaker = new DConnectionMaker();
+    }
 
     public void add(User user) throws ClassNotFoundException, SQLException {
-        Connection c = getConnection();
+        Connection c = connectionMaker.makeConnection();
 
         PreparedStatement ps = c.prepareStatement("insert into users(id, name, password) values(?,?,?)");
         ps.setString(1, user.getId());
@@ -31,7 +37,7 @@ public abstract class UserDao {
 
     public User get(String id) throws ClassNotFoundException, SQLException {
 
-        Connection c = getConnection();
+        Connection c = connectionMaker.makeConnection();
         PreparedStatement ps = c.prepareStatement("select * from users where id = ?");
         ps.setString(1, id);
 
@@ -49,7 +55,23 @@ public abstract class UserDao {
         return user;
     }
 
-    // UserDao는 여기저기서 사용하고 싶은데, 다른 DB를 사용해야하는 니즈가 있을 수 있어 abstract 화
-    public abstract Connection getConnection() throws ClassNotFoundException, SQLException;
+    public static void main(String[] args) throws ClassNotFoundException, SQLException {
+        UserDao dao = new UserDao();
+
+        User user = new User();
+        user.setId("ginseng");
+        user.setName("홍상원");
+        user.setPassword("red");
+
+        dao.add(user);
+
+        System.out.println(user.getId() + " 등록 성공");
+
+        User user2 = dao.get(user.getId());
+        System.out.println(user2.getName());
+        System.out.println(user2.getPassword());
+        System.out.println(user2.getId() + " 조회 성공");
+    }
+
 
 }
