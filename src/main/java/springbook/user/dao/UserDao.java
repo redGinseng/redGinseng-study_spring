@@ -16,6 +16,9 @@ public class UserDao {
 
     private ConnectionMaker connectionMaker;
 
+    // DB Connection 관심사를 다루는 interface를 생성한 이유는, 인터페이스의 사용자(DUserDao)는 DB Connection 에 대해서는 신경을 끌 수 있게 해주기 위함이다.
+    // 인터페이스를 만들었다고는 하지만, UserDao를 사용하기 위해서는 여전히 conncetionMaker 구현체의 타입(DConnectionMaker)을 알아야 한다.
+    // 아직도 UserDao만 전해주고, 마음껏 DB Connect 을 구현하라고 할 수 없다.
     public UserDao(){
         connectionMaker = new DConnectionMaker();
     }
