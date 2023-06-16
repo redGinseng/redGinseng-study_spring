@@ -8,23 +8,18 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- * UserDao의 관심사
- * - 데이터를 어떻게 등록하고 불러올 것인가
+ * 최초 UserDAO는 DB 연결 방법을 확장하려면 DAO내부를 변경해야하는 불편한 상황 이었다.
+ * UserDAO는 개방폐쇄의 원칙에 맞춰 수정되었다.
+ *
+ * 개방 폐쇄의 원칙 :
+ * UserDao는 DB연결방법이라는 기능을 확장하는데 열려있다.
+ * UserDAO에 전혀 영향을 주지 않고도, ConnectionMaker Interface와 그 구현체를 수정하는 것만으로 기능을 확장할 수 있다.
  *
  */
 public class UserDao {
 
     private ConnectionMaker connectionMaker;
-    /*
-    DB Connection 관심사를 다루는 interface를 생성한 이유는, 인터페이스의 사용자(DUserDao)는 DB Connection 에 대해서는 신경을 끌 수 있게 해주기 위함이다.
-    인터페이스를 만들었다고는 하지만, UserDao를 사용하기 위해서는 여전히 conncetionMaker 구현체의 타입(DConnectionMaker)을 알아야 한다.
-    아직도 UserDao만 전해주고, 마음껏 DB Connect 을 구현하라고 할 수 없다.
-    UserDao 가 어떤 ConnectionMaker 클래스를 사용할지, 관계를 설정하는 관심사까지도 분리가 이뤄져야, 독립적으로 확장 가능한 클래스가 될 수 있다.
-    */
 
-    // DConnectionMaker를 생성하는 코드는 UserDao와 ConncetionMaker 구현 클래스(DConnectionMaker)의 오브젝트 간 관계를 맺는 책임을 담당하는 코드였다
-    // 이것을 UserDao의 클라이언트(여기선 UserDadTest)에 넘겨버리자.
-    // 그리고 원래 관심사인 sql 생성, 실행에 집중한다.
     public UserDao(ConnectionMaker connectionMaker){
         this.connectionMaker = connectionMaker;
     }
@@ -63,24 +58,5 @@ public class UserDao {
 
         return user;
     }
-
-    public static void main(String[] args) throws ClassNotFoundException, SQLException {
-        UserDao dao = new UserDao();
-
-        User user = new User();
-        user.setId("ginseng");
-        user.setName("홍상원");
-        user.setPassword("red");
-
-        dao.add(user);
-
-        System.out.println(user.getId() + " 등록 성공");
-
-        User user2 = dao.get(user.getId());
-        System.out.println(user2.getName());
-        System.out.println(user2.getPassword());
-        System.out.println(user2.getId() + " 조회 성공");
-    }
-
 
 }
