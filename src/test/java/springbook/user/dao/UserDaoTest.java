@@ -26,7 +26,6 @@ class UserDaoTest {
         // getBean할 때 UserDao.class 를 넣어주면 지저분하게 캐스팅 안해도 됨
         UserDao dao = context.getBean("userDao", UserDao.class);
 
-
         User user = new User();
         user.setId("ginseng");
         user.setName("홍상원");
@@ -41,8 +40,10 @@ class UserDaoTest {
         System.out.println(user2.getPassword());
         System.out.println(user2.getId() + " 조회 성공");
 
-        CountingConnectionMaker ccm = context.getBean("connectionMaker", CountingConnectionMaker.class);
-        System.out.println("Connection counter : "+ ccm.getCounter());
+//        CountingConnectionMaker ccm = context.getBean("connectionMaker", CountingConnectionMaker.class);
+//        System.out.println("Connection counter : "+ ccm.getCounter());
+        CountingAddedDataSource cads = context.getBean("countingAddedDataSource", CountingAddedDataSource.class);
+        System.out.println("Connection counter: " + cads.getCounter());
     }
 
 

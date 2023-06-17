@@ -2,6 +2,7 @@ package springbook.user.dao;
 
 import springbook.user.domain.User;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -17,17 +18,14 @@ import java.sql.SQLException;
  */
 public class UserDao {
 
-    //의존관계 주입을 생성자에서 setter 방식으로 변경
-    public void setConnectionMaker(ConnectionMaker connectionMaker) {
-        this.connectionMaker = connectionMaker;
-    }
+
 
     // 읽기전용 정보.
     // DaoFactory에서 ConnectionMaker Bean을 붙여 생성 될 때 딱 한번 싱글톤 오브젝트로 생성된다.
     // 스프링의 싱글톤 레지스트리에서 관리되어, 신경쓸 필요가 없다.
     // 스프링 빈의 기본스코프는 싱글톤이다. 싱글톤 스코프는 컨테이너 내에 한 개의 오브젝트만 만들어져서,
     // 강제로 제거하지 않는 한 스프링 컨테이너가 존재하는 동안 계속 유지한다.
-    private ConnectionMaker connectionMaker;
+    private DataSource dataSource;
 
     // 매번 새로운 값으로 바뀌는 정보를 담은 인스턴스 변수.
     // 이런 오브젝트는 싱글톤 스코프로 관리할 수 없겠다.
@@ -35,9 +33,13 @@ public class UserDao {
     private User user;
 
 
+    //의존관계 주입을 생성자에서 setter 방식으로 변경
+    public void setDataSource(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
     public void add(User user) throws ClassNotFoundException, SQLException {
-        Connection c = connectionMaker.makeConnection();
+        Connection c = dataSource.getConnection();
 
         PreparedStatement ps = c.prepareStatement("insert into users(id, name, password) values(?,?,?)");
         ps.setString(1, user.getId());
@@ -52,7 +54,7 @@ public class UserDao {
 
 
     public User get(String id) throws ClassNotFoundException, SQLException {
-        this.c = connectionMaker.makeConnection();
+        Connection c = dataSource.getConnection();
 //        Connection c = connectionMaker.makeConnection();
         PreparedStatement ps = c.prepareStatement("select * from users where id = ?");
         ps.setString(1, id);
