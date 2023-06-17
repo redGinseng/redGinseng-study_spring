@@ -3,13 +3,12 @@ package springbook.user.dao;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-public class CountingConnectionMaker implements ConnectionMaker{
+public class CountingConnectionMaker implements ConnectionMaker {
 
-    private int counter;
+    private int counter = 0;
     private ConnectionMaker realConncetionMaker;
 
-    public CountingConnectionMaker(ConnectionMaker connectionMaker){
-        counter = 0;
+    public void setConnectionMaker(ConnectionMaker connectionMaker) {
         this.realConncetionMaker = connectionMaker;
     }
 
@@ -19,7 +18,9 @@ public class CountingConnectionMaker implements ConnectionMaker{
         return realConncetionMaker.makeConnection();
     }
 
-    public int getCounter(){
-        return  this.counter;
+    public int getCounter() {
+        return this.counter;
     }
+
+
 }
