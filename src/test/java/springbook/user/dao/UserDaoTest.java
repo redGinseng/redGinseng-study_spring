@@ -6,8 +6,6 @@ import springbook.user.domain.User;
 
 import java.sql.SQLException;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class UserDaoTest {
 
     /*
@@ -19,7 +17,7 @@ class UserDaoTest {
     public static void main(String[] args) throws ClassNotFoundException, SQLException {
 
         ApplicationContext context =
-                new AnnotationConfigApplicationContext(DaoFactory.class);
+                new AnnotationConfigApplicationContext(CountingDaoFactory.class);
         // getBean 할때 name은 메소드 이름으로
         //UserDao dao = (UserDao) context.getBean("userDao");
         // getBean할 때 UserDao.class 를 넣어주면 지저분하게 캐스팅 안해도 됨
@@ -39,6 +37,9 @@ class UserDaoTest {
         System.out.println(user2.getName());
         System.out.println(user2.getPassword());
         System.out.println(user2.getId() + " 조회 성공");
+
+        CountingConnectionMaker ccm = context.getBean("connectionMaker", CountingConnectionMaker.class);
+        System.out.println("Connection counter : "+ ccm.getCounter());
     }
 
 
