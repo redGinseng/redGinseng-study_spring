@@ -1,9 +1,12 @@
 package springbook.user.dao;
 
 /**
- * DaoFactory는 오브젝트를 구성하고 관계를 정의하는 책임
- * 새로운 ConnectionMaker 구현 클래스로 변경이 필요하면
- * DaoFactory를 수정해서 변경된 클래스를 생성해 설정하도록 코드를 수정
+ * 원래 ConnectionMaker의 구현 클래스를 결정하고, 오브젝트를 만드는 제어권은 UserDao에게 있었다.
+ *  예전 UserDao.java
+ *   ... ConnectionMaker cMaker = new DConnectionMaker();
+ *
+ * 제어권을 DaoFactory로 넘기고 (역전), UserDao는 수동적인 존재가 되었따.
+ *
  */
 public class DaoFactory {
     public UserDao userDao() {
