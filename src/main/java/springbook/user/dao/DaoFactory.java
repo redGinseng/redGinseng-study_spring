@@ -1,23 +1,23 @@
 package springbook.user.dao;
 
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 /**
- * 원래 ConnectionMaker의 구현 클래스를 결정하고, 오브젝트를 만드는 제어권은 UserDao에게 있었다.
- *  예전 UserDao.java
- *   ... ConnectionMaker cMaker = new DConnectionMaker();
- *
- * 제어권을 DaoFactory로 넘기고 (역전), UserDao는 수동적인 존재가 되었따.
+ * Application Context 를 적용한다.
  *
  */
+
+@Configuration  //Application Context가 사용할 설정정보라는 표시, 사실 XML과 같은 설정정보라 봐도 무방한 클래스
 public class DaoFactory {
+
+    @Bean   // UserDao 오브젝트 생성을 담당하는 IoC용 메소드라는 표시
     public UserDao userDao() {
         UserDao userDao = new UserDao(connectionMaker());
         return userDao;
     }
 
-    public AccountDao accountDao(){
-        return new AccountDao(connectionMaker());
-    }
-
+    @Bean // ConncetionMaker 타입의 오브젝트를 생성해주는 메소드이므로 @Bean을 붙여준다
     public ConnectionMaker connectionMaker(){
         ConnectionMaker connectionMaker = new DConnectionMaker();
 

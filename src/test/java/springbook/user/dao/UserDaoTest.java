@@ -1,5 +1,7 @@
 package springbook.user.dao;
 
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import springbook.user.domain.User;
 
 import java.sql.SQLException;
@@ -15,7 +17,14 @@ class UserDaoTest {
      프로그램의 엔드포인트 정도만 제외하면, 모든 오브젝트는 위임받은 제어권한을 갖는 특별한 오브젝트에 의해 결정되고 만들어진다.
      */
     public static void main(String[] args) throws ClassNotFoundException, SQLException {
-        UserDao dao = new DaoFactory().userDao();
+
+        ApplicationContext context =
+                new AnnotationConfigApplicationContext(DaoFactory.class);
+        // getBean 할때 name은 메소드 이름으로
+        //UserDao dao = (UserDao) context.getBean("userDao");
+        // getBean할 때 UserDao.class 를 넣어주면 지저분하게 캐스팅 안해도 됨
+        UserDao dao = context.getBean("userDao", UserDao.class);
+
 
         User user = new User();
         user.setId("ginseng");
