@@ -7,8 +7,17 @@ package springbook.user.dao;
  */
 public class DaoFactory {
     public UserDao userDao() {
-        ConnectionMaker connectionMaker = new DConnectionMaker();
-        UserDao userDao = new UserDao(connectionMaker);
+        UserDao userDao = new UserDao(connectionMaker());
         return userDao;
+    }
+
+    public AccountDao accountDao(){
+        return new AccountDao(connectionMaker());
+    }
+
+    public ConnectionMaker connectionMaker(){
+        ConnectionMaker connectionMaker = new DConnectionMaker();
+
+        return connectionMaker;
     }
 }
