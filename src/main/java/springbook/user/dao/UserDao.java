@@ -1,5 +1,6 @@
 package springbook.user.dao;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import springbook.user.domain.User;
 
 import javax.sql.DataSource;
@@ -11,13 +12,12 @@ import java.sql.SQLException;
 /**
  * 최초 UserDAO는 DB 연결 방법을 확장하려면 DAO내부를 변경해야하는 불편한 상황 이었다.
  * UserDAO는 개방폐쇄의 원칙에 맞춰 수정되었다.
- *
+ * <p>
  * 개방 폐쇄의 원칙 :
  * UserDao는 DB연결방법이라는 기능을 확장하는데 열려있다.
  * UserDao에 전혀 영향을 주지 않고도, ConnectionMaker Interface와 그 구현체를 수정하는 것만으로 기능을 확장할 수 있다.
  */
 public class UserDao {
-
 
 
     // 읽기전용 정보.
@@ -60,18 +60,23 @@ public class UserDao {
         ps.setString(1, id);
 
         ResultSet rs = ps.executeQuery();
-        rs.next();
 
-        this.user = new User();
-        user.setId(rs.getString("id"));
-        user.setName(rs.getString("name"));
-        user.setPassword(rs.getString("password"));
+        User user = null;
+
+        if (rs.next()) {
+            user = new User();
+            user.setId(rs.getString("id"));
+            user.setName(rs.getString("name"));
+            user.setPassword(rs.getString("password"));
+        }
 
         rs.close();
         ps.close();
         c.close();
 
-        return this.user;
+        if (user==null) throw new EmptyResultDataAccessException(1);
+
+        return user;
     }
 
 
@@ -85,7 +90,7 @@ public class UserDao {
         c.close();
     }
 
-    public int getCount() throws SQLException{
+    public int getCount() throws SQLException {
         Connection c = dataSource.getConnection();
 
         PreparedStatement ps = c.prepareStatement("select count(*) from users");
@@ -93,6 +98,7 @@ public class UserDao {
         ResultSet rs = ps.executeQuery();
         rs.next();
         int count = rs.getInt(1);
+        System.out.println(count);
 
         rs.close();
         ps.close();
