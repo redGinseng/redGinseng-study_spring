@@ -5,12 +5,10 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import springbook.user.domain.User;
 
-
-import java.sql.Connection;
 import java.sql.SQLException;
 
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 
 class UserDaoTest {
@@ -23,7 +21,7 @@ class UserDaoTest {
 
 
     @Test
-    public void addAndGet() throws ClassNotFoundException,SQLException{
+    public void addAndGet() throws ClassNotFoundException, SQLException {
         ApplicationContext context = new
                 ClassPathXmlApplicationContext("applicationContext.xml");
 
@@ -32,18 +30,44 @@ class UserDaoTest {
         dao.deleteAll();
         assertThat(dao.getCount(), equalTo(0));
 
-        User user = new User();
-        user.setId("ginseng");
-        user.setName("홍상원");
-        user.setPassword("red");
+        User user = new User("ginseng", "홍상원", "red");
+        User user2 = new User("moni", "cat", "meow");
+
+        dao.add(user);
+        dao.add(user2);
+        assertThat(dao.getCount(), equalTo(1));
+
+        User userGet1 = dao.get(user.getId());
+        User userGet2 = dao.get(user2.getId());
+
+        assertThat(user.getName(), equalTo(userGet1.getName()));
+        assertThat(user.getPassword(), equalTo(userGet1.getPassword()));
+        assertThat(user2.getName(), equalTo(userGet2.getName()));
+        assertThat(user2.getPassword(), equalTo(userGet2.getPassword()));
+    }
+
+
+    @Test
+    public void count() throws ClassNotFoundException, SQLException {
+        ApplicationContext context = new
+                ClassPathXmlApplicationContext("applicationContext.xml");
+
+        UserDao dao = context.getBean("userDao", UserDao.class);
+
+
+        User user = new User("ginseng", "홍상원", "red");
+        User user2 = new User("moni", "cat", "meow");
+
+
+        dao.deleteAll();
+        assertThat(dao.getCount(), equalTo(0));
+
 
         dao.add(user);
         assertThat(dao.getCount(), equalTo(1));
 
-        User user2 = dao.get(user.getId());
-
-        assertThat(user2.getName(), equalTo(user.getName()));
-        assertThat(user2.getPassword(), equalTo(user.getPassword()));
+        dao.add(user2);
+        assertThat(dao.getCount(), equalTo(2));
     }
 
 
