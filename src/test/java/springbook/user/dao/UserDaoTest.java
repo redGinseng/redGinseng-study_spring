@@ -1,15 +1,18 @@
 package springbook.user.dao;
 
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.dao.EmptyResultDataAccessException;
 import springbook.user.domain.User;
 
 import java.sql.SQLException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class UserDaoTest {
 
@@ -18,56 +21,64 @@ class UserDaoTest {
         이제 테스트도 프레임워크로 동작하도록 JUnit으로 옮겨보자
 
      */
+    // 테스트를 수행하는데 필요한 정보나 오브젝트를 픽스쳐라고 한다.
+    // UserDao 와 같은 픽스쳐는 모든 테스트에서 쓰이니, 밖으로 추출한다.
+    private UserDao userDao;
 
+    @BeforeEach
+    public void setUp() {
+        ApplicationContext context = new
+                ClassPathXmlApplicationContext("applicationContext.xml");
+        this.userDao = context.getBean("userDao", UserDao.class);
+    }
 
     @Test
     public void addAndGet() throws ClassNotFoundException, SQLException {
-        ApplicationContext context = new
-                ClassPathXmlApplicationContext("applicationContext.xml");
+        userDao.deleteAll();
+        assertThat(userDao.getCount(), equalTo(0));
 
-        UserDao dao = context.getBean("userDao", UserDao.class);
-
-        dao.deleteAll();
-        assertThat(dao.getCount(), equalTo(0));
-
-        User user = new User("ginseng", "홍상원", "red");
+        User user1 = new User("ginseng", "홍상원", "red");
         User user2 = new User("moni", "cat", "meow");
 
-        dao.add(user);
-        dao.add(user2);
-        assertThat(dao.getCount(), equalTo(1));
+        userDao.add(user1);
+        userDao.add(user2);
+        assertThat(userDao.getCount(), equalTo(2));
 
-        User userGet1 = dao.get(user.getId());
-        User userGet2 = dao.get(user2.getId());
+        User userGet1 = userDao.get(user1.getId());
+        User userGet2 = userDao.get(user2.getId());
 
-        assertThat(user.getName(), equalTo(userGet1.getName()));
-        assertThat(user.getPassword(), equalTo(userGet1.getPassword()));
+        assertThat(user1.getName(), equalTo(userGet1.getName()));
+        assertThat(user1.getPassword(), equalTo(userGet1.getPassword()));
         assertThat(user2.getName(), equalTo(userGet2.getName()));
         assertThat(user2.getPassword(), equalTo(userGet2.getPassword()));
     }
 
+    @Test
+    public void getUserFailure() throws SQLException, ClassNotFoundException {
+        Exception exception = assertThrows(EmptyResultDataAccessException.class, () -> {
+
+            userDao.deleteAll();
+            assertThat(userDao.getCount(), equalTo(0));
+
+            userDao.get("unknown");
+
+        });
+
+    }
 
     @Test
     public void count() throws ClassNotFoundException, SQLException {
-        ApplicationContext context = new
-                ClassPathXmlApplicationContext("applicationContext.xml");
-
-        UserDao dao = context.getBean("userDao", UserDao.class);
-
-
         User user = new User("ginseng", "홍상원", "red");
         User user2 = new User("moni", "cat", "meow");
 
+        userDao.deleteAll();
+        assertThat(userDao.getCount(), equalTo(0));
 
-        dao.deleteAll();
-        assertThat(dao.getCount(), equalTo(0));
+        userDao.add(user);
+        assertThat(userDao.getCount(), equalTo(1));
 
-
-        dao.add(user);
-        assertThat(dao.getCount(), equalTo(1));
-
-        dao.add(user2);
-        assertThat(dao.getCount(), equalTo(2));
+        userDao.add(user2);
+        assertThat(userDao.getCount(), equalTo(2));
     }
 
 
