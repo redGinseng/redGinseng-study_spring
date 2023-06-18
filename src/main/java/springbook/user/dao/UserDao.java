@@ -74,17 +74,41 @@ public class UserDao {
         ps.close();
         c.close();
 
-        if (user==null) throw new EmptyResultDataAccessException(1);
+        if (user == null) throw new EmptyResultDataAccessException(1);
 
         return user;
     }
 
 
     public void deleteAll() throws SQLException {
-        Connection c = dataSource.getConnection();
+        Connection c = null;
+        PreparedStatement ps = null;
 
-        PreparedStatement ps = c.prepareStatement("delete from users");
-        ps.executeUpdate();
+        try {
+            c = dataSource.getConnection();
+            ps = c.prepareStatement("delete from users");
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            if (ps !=null){
+                try{
+                    ps.close();
+                }catch (SQLException e){
+
+                }
+
+            }
+            if (c!=null){
+                try{
+                    ps.close();
+                }catch (SQLException e){
+
+                }
+
+            }
+        }
 
         ps.close();
         c.close();
