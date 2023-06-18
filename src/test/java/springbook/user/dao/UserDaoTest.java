@@ -6,6 +6,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import springbook.user.domain.User;
 
 
+import java.sql.Connection;
 import java.sql.SQLException;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -20,6 +21,7 @@ class UserDaoTest {
 
      */
 
+
     @Test
     public void addAndGet() throws ClassNotFoundException,SQLException{
         ApplicationContext context = new
@@ -27,14 +29,16 @@ class UserDaoTest {
 
         UserDao dao = context.getBean("userDao", UserDao.class);
 
+        dao.deleteAll();
+        assertThat(dao.getCount(), equalTo(0));
+
         User user = new User();
         user.setId("ginseng");
         user.setName("홍상원");
         user.setPassword("red");
 
         dao.add(user);
-
-        System.out.println(user.getId() + " 등록 성공");
+        assertThat(dao.getCount(), equalTo(1));
 
         User user2 = dao.get(user.getId());
 
