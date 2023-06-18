@@ -3,17 +3,25 @@ package springbook.user.dao;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import springbook.user.domain.User;
 
+import javax.sql.DataSource;
 import java.sql.SQLException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(locations = "/test-applicationContext.xml")
 class UserDaoTest {
 
     /*
@@ -21,15 +29,20 @@ class UserDaoTest {
         이제 테스트도 프레임워크로 동작하도록 JUnit으로 옮겨보자
 
      */
+    @Autowired
+    private ApplicationContext applicationContext;
+
+
     // 테스트를 수행하는데 필요한 정보나 오브젝트를 픽스쳐라고 한다.
     // UserDao 와 같은 픽스쳐는 모든 테스트에서 쓰이니, 밖으로 추출한다.
+    @Autowired
     private UserDao userDao;
 
     @BeforeEach
     public void setUp() {
-        ApplicationContext context = new
-                ClassPathXmlApplicationContext("applicationContext.xml");
-        this.userDao = context.getBean("userDao", UserDao.class);
+        DataSource dataSource = new SingleConnectionDataSource(
+                "jdbc:mysql://localhost/testdb", "spring", "book", true
+        );
     }
 
     @Test
