@@ -1,11 +1,13 @@
 package springbook.user.dao;
 
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import javax.sql.DataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
-
-import javax.sql.DataSource;
 
 /**
  * Application Context 를 적용한다.
@@ -23,15 +25,7 @@ public class DaoFactory {
     }
 
     @Bean
-    public CountingAddedDataSource dataSource() {
-        CountingAddedDataSource dataSource = new CountingAddedDataSource();
-        dataSource.setDataSource(realDataSource());
-
-        return dataSource;
-    }
-
-    @Bean
-    public DataSource realDataSource() {
+    public DataSource dataSource() {
         return new SimpleDriverDataSource();
     }
 
