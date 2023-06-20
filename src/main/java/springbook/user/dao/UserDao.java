@@ -22,32 +22,97 @@ public class UserDao {
         this.dataSource = dataSource;
     }
 
-    public void add(final User user) throws SQLException {
-        this.jdbcContext.workWithStatementStrategy(
-            new StatementStrategy() {
-                @Override
-                public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
-                    PreparedStatement ps =
-                        c.prepareStatement("insert into users(id, name, password) values(?,?,?)");
-                    ps.setString(1, user.getId());
-                    ps.setString(2, user.getName());
-                    ps.setString(3, user.getPassword());
+    public void jdbcContextWithStatementStrategy(StatementStrategy stmt) throws SQLException {
+        Connection c = null;
+        PreparedStatement ps = null;
 
-                    return ps;
+        try {
+            c = dataSource.getConnection();
+
+            ps = stmt.makePreparedStatement(c);
+
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
                 }
             }
-        );
+            if (c != null) {
+                try {
+                    c.close();
+                } catch (SQLException e) {
+                }
+            }
+        }
     }
 
+//    public void add(User user) throws  SQLException{
+//        StatementStrategy strategy = new StatementStrategy() {
+//            @Override
+//            public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
+//                // 여기가 전략이 들어가는 부분
+//                PreparedStatement ps = c.prepareStatement("insert into users(id,name,password) values (?,?,?)");
+//                ps.setString(1, user.getId());
+//                ps.setString(2, user.getName());
+//                ps.setString(3, user.getPassword());
+//                return ps;
+//            }
+//        };
+//    }
 
-    public void deleteAll() throws SQLException {
-        this.jdbcContext.workWithStatementStrategy(new StatementStrategy() {
+    public void add(User user) throws SQLException {
+        // 여기서 사용하는 strategy는 변수에 담을 필요 없다. 익명 클래스화 하자
+        jdbcContextWithStatementStrategy(new StatementStrategy() {
             @Override
             public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
-                return c.prepareStatement("delete from users");
+                PreparedStatement ps = c.prepareStatement("insert into users(id,name,password) values (?,?,?)");
+                ps.setString(1, user.getId());
+                ps.setString(2, user.getName());
+                ps.setString(3, user.getPassword());
+                return ps;
             }
         });
     }
+
+//    public void add(final User user) throws SQLException {
+//        jdbcContext.workWithStatementStrategy(
+//            new StatementStrategy() {
+//                @Override
+//                public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
+//                    PreparedStatement ps =
+//                        c.prepareStatement("insert into users(id, name, password) values(?,?,?)");
+//                    ps.setString(1, user.getId());
+//                    ps.setString(2, user.getName());
+//                    ps.setString(3, user.getPassword());
+//
+//                    return ps;
+//                }
+//            }
+//        );
+//    }
+
+    // 익명 내부 클래스를 활용한 deleteAll의 전략패턴 적용
+    public void deleteAll() throws SQLException {
+       jdbcContextWithStatementStrategy(new StatementStrategy() {
+           @Override
+           public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
+               return c.prepareStatement("delete from users");
+           }
+       });
+    }
+
+//    public void deleteAll() throws SQLException {
+//        jdbcContext.workWithStatementStrategy(new StatementStrategy() {
+//            @Override
+//            public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
+//                return c.prepareStatement("delete from users");
+//            }
+//        });
+//    }
 
     public User get(String id) throws SQLException {
         Connection c = this.dataSource.getConnection();
@@ -69,12 +134,14 @@ public class UserDao {
         ps.close();
         c.close();
 
-        if (user == null) throw new EmptyResultDataAccessException(1);
+        if (user == null) {
+            throw new EmptyResultDataAccessException(1);
+        }
 
         return user;
     }
 
-    public int getCount() throws SQLException  {
+    public int getCount() throws SQLException {
         Connection c = dataSource.getConnection();
 
         PreparedStatement ps = c.prepareStatement("select count(*) from users");
