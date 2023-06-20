@@ -8,19 +8,13 @@ import javax.sql.DataSource;
 import org.springframework.dao.EmptyResultDataAccessException;
 import springbook.user.domain.User;
 
-/**
- * 최초 UserDAO는 DB 연결 방법을 확장하려면 DAO내부를 변경해야하는 불편한 상황 이었다. UserDAO는 개방폐쇄의 원칙에 맞춰 수정되었다.
- * <p>
- * 개방 폐쇄의 원칙 : UserDao는 DB연결방법이라는 기능을 확장하는데 열려있다. UserDao에 전혀 영향을 주지 않고도, ConnectionMaker Interface와 그 구현체를 수정하는 것만으로
- * 기능을 확장할 수 있다.
- */
+
 public class UserDao {
 
     private DataSource dataSource;
     private Connection c;
     private User user;
 
-    //의존관계 주입을 생성자에서 setter 방식으로 변경
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
     }
@@ -54,14 +48,49 @@ public class UserDao {
     }
 
     public void add(User user) throws ClassNotFoundException, SQLException {
+        // strategy 가 늘어남에따라 Class 파일도 늘어나는게 부담스럽다면 UserDao 메서드 안에 내부 클래스로 박아버리자
+        class AddStatement implements StatementStrategy {
+
+            User user;
+
+            public AddStatement(User user) {
+                this.user = user;
+            }
+
+            @Override
+            public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
+                PreparedStatement ps =
+                    c.prepareStatement("insert into  users (id, name, password) values (?,?,?)");
+                ps.setString(1, user.getId());
+                ps.setString(2, user.getName());
+                ps.setString(3, user.getPassword());
+
+                return ps;
+            }
+        }
+
         StatementStrategy strategy = new AddStatement(user);
         jdbcContextWithStatementStrategy(strategy);
     }
 
+    public void deleteAll() throws SQLException {
+        jdbcContextWithStatementStrategy(
+            // 익명 내부 클래스를 사용해보자. 클래스 선언과 오브젝트 생성이 결합한 형태.
+            // 상속할 클래스나 구현할 인터페이스를, 생성자 대신 사용
+            // 클래스를 재사용할 필요가 없고 구현한 인터페이스 타입으로만 사용할 경우
+            new StatementStrategy() {
+                public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
+
+                    return c.prepareStatement("delete from users");
+                }
+            }
+        );
+    }
 
     public User get(String id) throws ClassNotFoundException, SQLException {
         Connection c = dataSource.getConnection();
 //        Connection c = connectionMaker.makeConnection();
+
         PreparedStatement ps = c.prepareStatement("select * from users where id = ?");
         ps.setString(1, id);
 
@@ -87,11 +116,6 @@ public class UserDao {
         return user;
     }
 
-
-    public void deleteAll() throws SQLException {
-       StatementStrategy strategy = new DeleteAllStatement();
-       jdbcContextWithStatementStrategy(strategy);
-    }
 
     public int getCount() throws SQLException {
         Connection c = null;
