@@ -1,6 +1,9 @@
 package springbook.user.dao;
 
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import javax.sql.DataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,7 +21,6 @@ public class DaoFactory {
         //의존관계 주입을 setter 방식으로 변경
         UserDao userDao = new UserDao();
         userDao.setDataSource(dataSource());
-
         return userDao;
     }
 
