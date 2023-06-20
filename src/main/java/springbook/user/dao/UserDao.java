@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.sql.DataSource;
-import org.springframework.dao.EmptyResultDataAccessException;
 import springbook.user.domain.User;
 
 
@@ -49,28 +48,19 @@ public class UserDao {
 
     public void add(User user) throws ClassNotFoundException, SQLException {
         // strategy 가 늘어남에따라 Class 파일도 늘어나는게 부담스럽다면 UserDao 메서드 안에 내부 클래스로 박아버리자
-        class AddStatement implements StatementStrategy {
-
-            User user;
-
-            public AddStatement(User user) {
-                this.user = user;
-            }
-
+        jdbcContextWithStatementStrategy(new StatementStrategy() {
             @Override
             public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
-                PreparedStatement ps =
-                    c.prepareStatement("insert into  users (id, name, password) values (?,?,?)");
-                ps.setString(1, user.getId());
-                ps.setString(2, user.getName());
-                ps.setString(3, user.getPassword());
-
-                return ps;
+                PreparedStatement preparedStatement = c.prepareStatement(
+                    "insert into  users(id,name,password) values (?,?,?)");
+                preparedStatement.setString(1, user.getId());
+                preparedStatement.setString(2, user.getName());
+                preparedStatement.setString(3, user.getPassword());
+                return null;
             }
-        }
+        });
 
-        StatementStrategy strategy = new AddStatement(user);
-        jdbcContextWithStatementStrategy(strategy);
+
     }
 
     public void deleteAll() throws SQLException {
@@ -110,7 +100,7 @@ public class UserDao {
         c.close();
 
         if (user == null) {
-            throw new EmptyResultDataAccessException(1);
+//            throw new EmptyResultDataAccessException(1);
         }
 
         return user;
