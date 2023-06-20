@@ -12,13 +12,10 @@ import springbook.user.domain.User;
 public class UserDao {
 
     private DataSource dataSource;
-
-    private JdbcContext jdbcContext;
+    private Connection c;
+    private User user;
 
     public void setDataSource(DataSource dataSource) {
-        this.jdbcContext = new JdbcContext();
-        this.jdbcContext.setDataSource(dataSource);
-
         this.dataSource = dataSource;
     }
 
@@ -50,79 +47,57 @@ public class UserDao {
         }
     }
 
-//    public void add(User user) throws  SQLException{
-//        StatementStrategy strategy = new StatementStrategy() {
-//            @Override
-//            public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
-//                // 여기가 전략이 들어가는 부분
-//                PreparedStatement ps = c.prepareStatement("insert into users(id,name,password) values (?,?,?)");
-//                ps.setString(1, user.getId());
-//                ps.setString(2, user.getName());
-//                ps.setString(3, user.getPassword());
-//                return ps;
-//            }
-//        };
-//    }
+    public void add(User user) throws ClassNotFoundException, SQLException {
+        // strategy 가 늘어남에따라 Class 파일도 늘어나는게 부담스럽다면 UserDao 메서드 안에 내부 클래스로 박아버리자
+        class AddStatement implements StatementStrategy {
 
-    public void add(User user) throws SQLException {
-        // 여기서 사용하는 strategy는 변수에 담을 필요 없다. 익명 클래스화 하자
-        jdbcContextWithStatementStrategy(new StatementStrategy() {
+            User user;
+
+            public AddStatement(User user) {
+                this.user = user;
+            }
+
             @Override
             public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
-                PreparedStatement ps = c.prepareStatement("insert into users(id,name,password) values (?,?,?)");
+                PreparedStatement ps =
+                    c.prepareStatement("insert into  users (id, name, password) values (?,?,?)");
                 ps.setString(1, user.getId());
                 ps.setString(2, user.getName());
                 ps.setString(3, user.getPassword());
+
                 return ps;
             }
-        });
+        }
+
+        StatementStrategy strategy = new AddStatement(user);
+        jdbcContextWithStatementStrategy(strategy);
     }
 
-//    public void add(final User user) throws SQLException {
-//        jdbcContext.workWithStatementStrategy(
-//            new StatementStrategy() {
-//                @Override
-//                public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
-//                    PreparedStatement ps =
-//                        c.prepareStatement("insert into users(id, name, password) values(?,?,?)");
-//                    ps.setString(1, user.getId());
-//                    ps.setString(2, user.getName());
-//                    ps.setString(3, user.getPassword());
-//
-//                    return ps;
-//                }
-//            }
-//        );
-//    }
-
-    // 익명 내부 클래스를 활용한 deleteAll의 전략패턴 적용
     public void deleteAll() throws SQLException {
-       jdbcContextWithStatementStrategy(new StatementStrategy() {
-           @Override
-           public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
-               return c.prepareStatement("delete from users");
-           }
-       });
+        jdbcContextWithStatementStrategy(
+            // 익명 내부 클래스를 사용해보자. 클래스 선언과 오브젝트 생성이 결합한 형태.
+            // 상속할 클래스나 구현할 인터페이스를, 생성자 대신 사용
+            // 클래스를 재사용할 필요가 없고 구현한 인터페이스 타입으로만 사용할 경우
+            new StatementStrategy() {
+                public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
+
+                    return c.prepareStatement("delete from users");
+                }
+            }
+        );
     }
 
-//    public void deleteAll() throws SQLException {
-//        jdbcContext.workWithStatementStrategy(new StatementStrategy() {
-//            @Override
-//            public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
-//                return c.prepareStatement("delete from users");
-//            }
-//        });
-//    }
+    public User get(String id) throws ClassNotFoundException, SQLException {
+        Connection c = dataSource.getConnection();
+//        Connection c = connectionMaker.makeConnection();
 
-    public User get(String id) throws SQLException {
-        Connection c = this.dataSource.getConnection();
-        PreparedStatement ps = c
-            .prepareStatement("select * from users where id = ?");
+        PreparedStatement ps = c.prepareStatement("select * from users where id = ?");
         ps.setString(1, id);
 
         ResultSet rs = ps.executeQuery();
 
         User user = null;
+
         if (rs.next()) {
             user = new User();
             user.setId(rs.getString("id"));
@@ -141,19 +116,46 @@ public class UserDao {
         return user;
     }
 
+
     public int getCount() throws SQLException {
-        Connection c = dataSource.getConnection();
+        Connection c = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        int count = -1;
 
-        PreparedStatement ps = c.prepareStatement("select count(*) from users");
+        try {
+            c = dataSource.getConnection();
+            ps = c.prepareStatement("select count(*) from users");
+            rs = ps.executeQuery();
+            rs.next();
+            count = rs.getInt(1);
+            return count;
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            if (c != null) {
+                try {
+                    rs.close();
+                } catch (SQLException e) {
 
-        ResultSet rs = ps.executeQuery();
-        rs.next();
-        int count = rs.getInt(1);
+                }
+            }
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
 
-        rs.close();
-        ps.close();
-        c.close();
+                }
+            }
 
-        return count;
+            if (c != null) {
+                try {
+                    c.close();
+                } catch (SQLException e) {
+
+                }
+            }
+        }
     }
+
 }
