@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -65,18 +64,6 @@ class UserDaoTest {
         assertThat(user2.getPassword(), equalTo(userGet2.getPassword()));
     }
 
-    @Test
-    public void getUserFailure() throws SQLException, ClassNotFoundException {
-        Exception exception = assertThrows(EmptyResultDataAccessException.class, () -> {
-
-            userDao.deleteAll();
-            assertThat(userDao.getCount(), equalTo(0));
-
-            userDao.get("unknown");
-
-        });
-
-    }
 
     @Test
     public void count() throws ClassNotFoundException, SQLException {

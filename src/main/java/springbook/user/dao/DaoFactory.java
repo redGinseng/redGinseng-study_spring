@@ -20,7 +20,9 @@ public class DaoFactory {
     public UserDao userDao() {
         //의존관계 주입을 setter 방식으로 변경
         UserDao userDao = new UserDao();
-        userDao.setDataSource(dataSource());
+
+        // 이거 갑자기 왜 에러나지
+        userDao.setDataSource((SimpleDriverDataSource) dataSource());
         return userDao;
     }
 

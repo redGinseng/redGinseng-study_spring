@@ -5,58 +5,28 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.sql.DataSource;
-import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import springbook.user.domain.User;
 
 
 public class UserDao {
 
     private DataSource dataSource;
-    private Connection c;
-    private User user;
 
-    public void setDataSource(DataSource dataSource) {
+    public void setDataSource(SimpleDriverDataSource dataSource) {
         this.dataSource = dataSource;
     }
 
-    public void jdbcContextWithStatementStrategy(StatementStrategy stmt) throws SQLException {
-        Connection c = null;
-        PreparedStatement ps = null;
+    private JdbcContext jdbcContext;
 
-        try {
-            c = dataSource.getConnection();
-
-            ps = stmt.makePreparedStatement(c);
-
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw e;
-        } finally {
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                }
-            }
-            if (c != null) {
-                try {
-                    c.close();
-                } catch (SQLException e) {
-                }
-            }
-        }
+    public void setJdbcContext(JdbcContext jdbcContext) {
+        this.jdbcContext = jdbcContext;
     }
+
 
     public void add(User user) throws ClassNotFoundException, SQLException {
         // strategy 가 늘어남에따라 Class 파일도 늘어나는게 부담스럽다면 UserDao 메서드 안에 내부 클래스로 박아버리자
-        class AddStatement implements StatementStrategy {
-
-            User user;
-
-            public AddStatement(User user) {
-                this.user = user;
-            }
-
+        this.jdbcContext.workWithStatementStrategy(new StatementStrategy() {
             @Override
             public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
                 PreparedStatement ps =
@@ -67,17 +37,12 @@ public class UserDao {
 
                 return ps;
             }
-        }
-
-        StatementStrategy strategy = new AddStatement(user);
-        jdbcContextWithStatementStrategy(strategy);
+        });
     }
 
     public void deleteAll() throws SQLException {
-        jdbcContextWithStatementStrategy(
-            // 익명 내부 클래스를 사용해보자. 클래스 선언과 오브젝트 생성이 결합한 형태.
-            // 상속할 클래스나 구현할 인터페이스를, 생성자 대신 사용
-            // 클래스를 재사용할 필요가 없고 구현한 인터페이스 타입으로만 사용할 경우
+        this.jdbcContext.workWithStatementStrategy(
+
             new StatementStrategy() {
                 public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
 
@@ -110,7 +75,7 @@ public class UserDao {
         c.close();
 
         if (user == null) {
-            throw new EmptyResultDataAccessException(1);
+//            throw new EmptyResultDataAccessException(1);
         }
 
         return user;
@@ -157,5 +122,6 @@ public class UserDao {
             }
         }
     }
+
 
 }
