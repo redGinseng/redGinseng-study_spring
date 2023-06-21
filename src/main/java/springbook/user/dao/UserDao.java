@@ -11,70 +11,42 @@ import springbook.user.domain.User;
 public class UserDao {
 
     private DataSource dataSource;
-    private Connection c;
-    private User user;
 
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
-    public void jdbcContextWithStatementStrategy(StatementStrategy stmt) throws SQLException {
-        Connection c = null;
-        PreparedStatement ps = null;
 
-        try {
-            c = dataSource.getConnection();
+    private JdbcContext jdbcContext;
 
-            ps = stmt.makePreparedStatement(c);
-
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw e;
-        } finally {
-            if (ps != null) {
-                try {
-                    ps.close();
-                } catch (SQLException e) {
-                }
-            }
-            if (c != null) {
-                try {
-                    c.close();
-                } catch (SQLException e) {
-                }
-            }
-        }
+    public void setJdbcContext(JdbcContext jdbcContext) {
+        this.jdbcContext = jdbcContext;
     }
 
     public void add(User user) throws ClassNotFoundException, SQLException {
         // strategy 가 늘어남에따라 Class 파일도 늘어나는게 부담스럽다면 UserDao 메서드 안에 내부 클래스로 박아버리자
-        jdbcContextWithStatementStrategy(new StatementStrategy() {
+        this.jdbcContext.workWithStatementStrategy(new StatementStrategy() {
             @Override
             public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
                 PreparedStatement preparedStatement = c.prepareStatement(
-                    "insert into  users(id,name,password) values (?,?,?)");
+                    "insert into users(id,name,password) values (?,?,?)");
                 preparedStatement.setString(1, user.getId());
                 preparedStatement.setString(2, user.getName());
                 preparedStatement.setString(3, user.getPassword());
-                return null;
+
+                return preparedStatement;
             }
         });
-
-
     }
 
     public void deleteAll() throws SQLException {
-        jdbcContextWithStatementStrategy(
-            // 익명 내부 클래스를 사용해보자. 클래스 선언과 오브젝트 생성이 결합한 형태.
-            // 상속할 클래스나 구현할 인터페이스를, 생성자 대신 사용
-            // 클래스를 재사용할 필요가 없고 구현한 인터페이스 타입으로만 사용할 경우
-            new StatementStrategy() {
-                public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
-
-                    return c.prepareStatement("delete from users");
-                }
+        this.jdbcContext.workWithStatementStrategy(new StatementStrategy() {
+            @Override
+            public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
+                return c.prepareStatement("delete from users");
             }
-        );
+        });
+
     }
 
     public User get(String id) throws ClassNotFoundException, SQLException {
