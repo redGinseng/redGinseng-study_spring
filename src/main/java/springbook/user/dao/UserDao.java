@@ -23,6 +23,19 @@ public class UserDao {
         this.jdbcContext = jdbcContext;
     }
 
+    public void executeSql(final String query) throws  SQLException{
+       this.jdbcContext.workWithStatementStrategy(
+            new StatementStrategy() {
+                @Override
+                public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
+                    return c.prepareStatement(query);
+                }
+            }
+
+        );
+
+    }
+
     public void add(User user) throws ClassNotFoundException, SQLException {
         // strategy 가 늘어남에따라 Class 파일도 늘어나는게 부담스럽다면 UserDao 메서드 안에 내부 클래스로 박아버리자
         this.jdbcContext.workWithStatementStrategy(new StatementStrategy() {
@@ -39,15 +52,11 @@ public class UserDao {
         });
     }
 
+    // 변하는 것과 변하지 않는 것을 분리하고, 변하지 않는 건 유연하게 재활용할 수 있게 만든다.
     public void deleteAll() throws SQLException {
-        this.jdbcContext.workWithStatementStrategy(new StatementStrategy() {
-            @Override
-            public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
-                return c.prepareStatement("delete from users");
-            }
-        });
-
+        executeSql("delet from users");
     }
+
 
     public User get(String id) throws ClassNotFoundException, SQLException {
         Connection c = dataSource.getConnection();
