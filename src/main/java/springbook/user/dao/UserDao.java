@@ -14,12 +14,15 @@ public class UserDao {
 
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
+        this.jdbcContext = new JdbcContext();
+        this.jdbcContext.setDataSource(dataSource);
     }
 
 
     private JdbcContext jdbcContext;
 
     public void setJdbcContext(JdbcContext jdbcContext) {
+
         this.jdbcContext = jdbcContext;
     }
 
@@ -54,7 +57,7 @@ public class UserDao {
 
     // 변하는 것과 변하지 않는 것을 분리하고, 변하지 않는 건 유연하게 재활용할 수 있게 만든다.
     public void deleteAll() throws SQLException {
-        executeSql("delet from users");
+        executeSql("delete from users");
     }
 
 

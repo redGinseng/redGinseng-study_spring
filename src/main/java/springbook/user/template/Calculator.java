@@ -7,12 +7,9 @@ import java.io.IOException;
 public class Calculator {
 
     public Integer calcSum(String filepath) throws IOException {
+        //람다 한번 써보자
         LineCallback sumCallback =
-            new LineCallback() {
-                public Integer doSomethingWithLine(String line, Integer value) {
-                    return value + Integer.valueOf(line);
-                }
-            };
+            (String line, Integer value) -> value + Integer.valueOf(line);
         return lineReadTemplate(filepath, sumCallback, 0);
     }
 
