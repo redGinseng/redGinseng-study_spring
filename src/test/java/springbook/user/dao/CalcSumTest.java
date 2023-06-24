@@ -18,7 +18,8 @@ public class CalcSumTest {
 	@BeforeEach
 	public void setUp() {
 		this.calculator = new Calculator();
-		this.numFilepath = getClass().getResource("numbers.txt").getPath();
+//		this.numFilepath = getClass().getResource("numbers.txt").getPath();
+		this.numFilepath = "/Users/nhn/Study/study_spring/src/main/java/springbook/user/template/numbers.txt";
 	}
 	
 	@Test
