@@ -1,6 +1,12 @@
 package springbook.user.dao;
 
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+
+import java.sql.SQLException;
+import java.util.List;
+import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,13 +16,6 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import springbook.user.domain.User;
-
-import javax.sql.DataSource;
-import java.sql.SQLException;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(locations = "/test-applicationContext.xml")
@@ -36,20 +35,24 @@ class UserDaoTest {
     @Autowired
     private UserDao userDao;
 
+    User user1;
+    User user2;
+
     @BeforeEach
     public void setUp() {
         DataSource dataSource = new SingleConnectionDataSource(
-                "jdbc:mysql://localhost/testdb", "spring", "book", true
+            "jdbc:mysql://localhost/testdb", "spring", "book", true
         );
+
+        user1 = new User("ginseng", "홍상원", "red");
+        user2 = new User("moni", "cat", "meow");
+
     }
 
     @Test
     public void addAndGet() throws ClassNotFoundException, SQLException {
         userDao.deleteAll();
         assertThat(userDao.getCount(), equalTo(0));
-
-        User user1 = new User("ginseng", "홍상원", "red");
-        User user2 = new User("moni", "cat", "meow");
 
         userDao.add(user1);
         userDao.add(user2);
@@ -79,18 +82,38 @@ class UserDaoTest {
 
     @Test
     public void count() throws ClassNotFoundException, SQLException {
-        User user = new User("ginseng", "홍상원", "red");
-        User user2 = new User("moni", "cat", "meow");
 
         userDao.deleteAll();
         assertThat(userDao.getCount(), equalTo(0));
 
-        userDao.add(user);
+        userDao.add(user1);
         assertThat(userDao.getCount(), equalTo(1));
 
         userDao.add(user2);
         assertThat(userDao.getCount(), equalTo(2));
     }
 
+    @Test
+    public void TestAll() throws SQLException, ClassNotFoundException {
+        userDao.deleteAll();
 
+        userDao.add(user1);
+        List<User> users1 = userDao.getAll();
+        assertThat(users1.size(), equalTo(1));
+        checkSameUser(user1, users1.get(0));
+
+        userDao.add(user2);
+        List<User> users2 = userDao.getAll();
+        assertThat(users2.size(), equalTo(2));
+        checkSameUser(user1, users2.get(0));
+        checkSameUser(user2, users2.get(1));
+
+    }
+
+    private void checkSameUser(User user1, User user2){
+        assertThat(user1.getId(), equalTo(user2.getId()));
+        assertThat(user1.getName(), equalTo(user2.getName()));
+        assertThat(user1.getPassword(), equalTo(user2.getPassword()));
+
+    }
 }
