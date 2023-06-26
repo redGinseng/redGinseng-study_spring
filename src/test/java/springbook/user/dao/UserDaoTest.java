@@ -14,11 +14,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DuplicateKeyException;
-import org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator;
-import org.springframework.jdbc.support.SQLExceptionTranslator;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import springbook.user.domain.Level;
 import springbook.user.domain.User;
 
 @ExtendWith(SpringExtension.class)
@@ -35,12 +33,14 @@ class UserDaoTest {
 
     User user1;
     User user2;
+    User user3;
 
     @BeforeEach
     public void setUp() {
 
-        user1 = new User("ginseng", "홍상원", "red");
-        user2 = new User("moni", "cat", "meow");
+        user1 = new User("ginseng", "홍상원", "red", Level.BASIC, 1, 0);
+        user2 = new User("moni", "cat", "meow", Level.SILVER, 12, 1);
+        user3 = new User("gu", "신지유", "meow", Level.GOLD, 120, 15);
 
     }
 
@@ -51,15 +51,12 @@ class UserDaoTest {
 
         userDao.add(user1);
         userDao.add(user2);
-        assertThat(userDao.getCount(), equalTo(2));
 
         User userGet1 = userDao.get(user1.getId());
+        checkSameUser(userGet1, user1);
         User userGet2 = userDao.get(user2.getId());
+        checkSameUser(userGet2, user2);
 
-        assertThat(user1.getName(), equalTo(userGet1.getName()));
-        assertThat(user1.getPassword(), equalTo(userGet1.getPassword()));
-        assertThat(user2.getName(), equalTo(userGet2.getName()));
-        assertThat(user2.getPassword(), equalTo(userGet2.getPassword()));
     }
 
     @Test
@@ -96,7 +93,9 @@ class UserDaoTest {
         assertThat(user1.getId(), equalTo(user2.getId()));
         assertThat(user1.getName(), equalTo(user2.getName()));
         assertThat(user1.getPassword(), equalTo(user2.getPassword()));
-
+        assertThat(user1.getLevel(), equalTo(user2.getLevel()));
+        assertThat(user1.getLogin(), equalTo(user2.getLogin()));
+        assertThat(user1.getRecommend(), equalTo(user2.getRecommend()));
     }
 
     @Test
