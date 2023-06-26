@@ -162,4 +162,16 @@ class UserDaoTest {
 
     }
 
+//    @Test
+//    public void add(){
+//        userDao.deleteAll();
+//
+//        userDao.add(user1);  // Level BASIC
+//        userDao.add(user2); // Level null
+//
+//        userService.add(user1);
+//        userService.add(user2);
+//
+//    }
+
 }

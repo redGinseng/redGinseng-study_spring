@@ -21,4 +21,9 @@ public class UserServiceTest {
         assertThat(this.userService, notNullValue());
     }
 
+
+    @Test
+    public void add() {
+
+    }
 }
