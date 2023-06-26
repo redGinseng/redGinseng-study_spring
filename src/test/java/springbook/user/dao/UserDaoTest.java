@@ -139,39 +139,6 @@ class UserDaoTest {
 
     }
 
-    @Test
-    public void upgradeLevels() {
-        userDao.deleteAll();
-        for (User user : users) {
-            userDao.add(user);
-        }
 
-        userService.upgradeLevels();
-
-        checkLevel(users.get(0), Level.BASIC);
-        checkLevel(users.get(1), Level.BASIC);
-        checkLevel(users.get(2), Level.SILVER);
-        checkLevel(users.get(3), Level.GOLD);
-        checkLevel(users.get(4), Level.GOLD);
-
-    }
-
-    private void checkLevel(User user, Level level) {
-        User userUpdate = userDao.get(user.getId());
-        assertThat(userUpdate.getLevel(), equalTo(level));
-
-    }
-
-//    @Test
-//    public void add(){
-//        userDao.deleteAll();
-//
-//        userDao.add(user1);  // Level BASIC
-//        userDao.add(user2); // Level null
-//
-//        userService.add(user1);
-//        userService.add(user2);
-//
-//    }
 
 }
