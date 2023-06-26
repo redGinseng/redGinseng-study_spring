@@ -11,6 +11,8 @@ public interface UserDao {
 
     User get(String id);
 
+    void update(User user);
+
     List<User> getAll();
 
     void deleteAll();
