@@ -5,6 +5,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.List;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.Assertions;
@@ -18,6 +19,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import springbook.user.domain.Level;
 import springbook.user.domain.User;
+import springbook.user.service.UserService;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(locations = "/test-applicationContext.xml")
@@ -29,18 +31,27 @@ class UserDaoTest {
     @Autowired
     private UserDao userDao;
     @Autowired
+    private UserService userService;
+    @Autowired
     private DataSource dataSource;
 
     User user1;
     User user2;
-    User user3;
+
+    List<User> users;
 
     @BeforeEach
     public void setUp() {
+        user1 = new User("ginseng", "홍상원", "red", Level.BASIC, 49, 0);
+        user2 = new User("moni", "cat", "meow", Level.BASIC, 50, 1);
 
-        user1 = new User("ginseng", "홍상원", "red", Level.BASIC, 1, 0);
-        user2 = new User("moni", "cat", "meow", Level.SILVER, 12, 1);
-        user3 = new User("gu", "신지유", "meow", Level.GOLD, 120, 15);
+        users = Arrays.asList(
+            new User("ginseng", "홍상원", "red", Level.BASIC, 49, 0),
+            new User("moni", "cat", "meow", Level.BASIC, 50, 0),
+            new User("gu", "신지유", "meow", Level.SILVER, 60, 29),
+            new User("erwins", "신승한", "meow", Level.SILVER, 60, 30),
+            new User("madnite", "강명성", "meow", Level.GOLD, 100, 100)
+        );
 
     }
 
@@ -108,10 +119,11 @@ class UserDaoTest {
     }
 
     @Test
-    public void update(){
+    public void update() {
         userDao.deleteAll();
 
         userDao.add(user1);
+        userDao.add(user2);
 
         user1.setName("홍상원");
         user1.setPassword("ginseng");
@@ -121,8 +133,32 @@ class UserDaoTest {
         userDao.update(user1);
 
         User user1update = userDao.get(user1.getId());
-
         checkSameUser(user1, user1update);
+        User user2update = userDao.get(user2.getId());
+        checkSameUser(user2, user2update);
+
+    }
+
+    @Test
+    public void upgradeLevels() {
+        userDao.deleteAll();
+        for (User user : users) {
+            userDao.add(user);
+        }
+
+        userService.upgradeLevels();
+
+        checkLevel(users.get(0), Level.BASIC);
+        checkLevel(users.get(1), Level.BASIC);
+        checkLevel(users.get(2), Level.SILVER);
+        checkLevel(users.get(3), Level.GOLD);
+        checkLevel(users.get(4), Level.GOLD);
+
+    }
+
+    private void checkLevel(User user, Level level) {
+        User userUpdate = userDao.get(user.getId());
+        assertThat(userUpdate.getLevel(), equalTo(level));
 
     }
 
