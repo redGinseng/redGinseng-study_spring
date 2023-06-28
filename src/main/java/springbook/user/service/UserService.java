@@ -1,10 +1,12 @@
 package springbook.user.service;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
-import javax.sql.DataSource;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import springbook.user.dao.UserDao;
 import springbook.user.domain.Level;
@@ -23,42 +25,35 @@ public class UserService {
         this.userDao = userDao;
     }
 
-    public void setDataSource(DataSource dataSource) {
-        this.dataSource = dataSource;
+    private PlatformTransactionManager transactionManager;
+
+    public void setTransactionManager(PlatformTransactionManager transactionManager) {
+        this.transactionManager = transactionManager;
     }
-
-    private DataSource dataSource;
-
-
 
     public void setUserLevelUpgradePolicy(UserLevelUpgradePolicy userLevelUpgradePolicy) {
         this.userLevelUpgradePolicy = userLevelUpgradePolicy;
     }
 
     public void upgradeLevels() throws SQLException {
-        TransactionSynchronizationManager.initSynchronization();
-        Connection c = DataSourceUtils.getConnection(dataSource);
-        c.setAutoCommit(false);
+        //어차피 Transaction을 다루는 기술도 다 공통적인 측면이 있으니, 추상화 할 수 있지 않을까?
+        //스프링에서 제공하는 방식(JTA)으로 트랜잭션을 제어하는 트랜잭션 경계설정을 써보자
+        TransactionStatus status=
+            this.transactionManager.getTransaction(new DefaultTransactionDefinition());
 
-        try{
+        try {
             List<User> users = userDao.getAll();
-            for(User user : users){
-                if(canUpgradeLevel(user))
+            for (User user : users) {
+                if (canUpgradeLevel(user)) {
                     upgradeLevel(user);
+                }
             }
-            c.commit();
+            this.transactionManager.commit(status);
 
-        }catch (Exception e) {
-            c.rollback();
-            throw  e;
-        } finally {
-            DataSourceUtils.releaseConnection(c, dataSource);
-            TransactionSynchronizationManager.unbindResource(this.dataSource);
-            TransactionSynchronizationManager.clearSynchronization();
+        } catch (Exception e) {
+            transactionManager.commit(status);
+            throw e;
         }
-
-
-
     }
 
     protected void upgradeLevel(User user) {
