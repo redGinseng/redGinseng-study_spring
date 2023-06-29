@@ -42,15 +42,15 @@ class UserDaoTest {
 
     @BeforeEach
     public void setUp() {
-        user1 = new User("ginseng", "홍상원", "red", Level.BASIC, 49, 0);
-        user2 = new User("moni", "cat", "meow", Level.BASIC, 50, 1);
+        user1 = new User("ginseng", "홍상원", "red","hsw0130@naver.com", Level.BASIC, 49, 0);
+        user2 = new User("moni", "cat", "meow","hsw0130@naver.com", Level.BASIC, 50, 1);
 
         users = Arrays.asList(
-            new User("ginseng", "홍상원", "red", Level.BASIC, 49, 0),
-            new User("moni", "cat", "meow", Level.BASIC, 50, 0),
-            new User("gu", "신지유", "meow", Level.SILVER, 60, 29),
-            new User("erwins", "신승한", "meow", Level.SILVER, 60, 30),
-            new User("madnite", "강명성", "meow", Level.GOLD, 100, 100)
+            new User("ginseng", "홍상원", "red","hsw0130@naver.com", Level.BASIC, 49, 0),
+            new User("moni", "cat", "meow","hsw0130@naver.com", Level.BASIC, 50, 0),
+            new User("gu", "신지유", "meow", "hsw0130@naver.com",Level.SILVER, 60, 29),
+            new User("erwins", "신승한", "meow","hsw0130@naver.com", Level.SILVER, 60, 30),
+            new User("madnite", "강명성", "meow","hsw0130@naver.com", Level.GOLD, 100, 100)
         );
 
     }
@@ -127,6 +127,7 @@ class UserDaoTest {
 
         user1.setName("홍상원");
         user1.setPassword("ginseng");
+        user1.setEmail("hsw0130@naver.com");
         user1.setLevel(Level.GOLD);
         user1.setLogin(1000);
         user1.setRecommend(999);

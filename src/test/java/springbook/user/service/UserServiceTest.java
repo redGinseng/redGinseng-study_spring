@@ -4,8 +4,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static springbook.user.service.UserService.MIN_LOGCOUNT_FOR_SILVER;
-import static springbook.user.service.UserService.MIN_RECOMMEND_FOR_GOLD;
+import static springbook.user.service.CommonUserLevelUpgradePolicy.MIN_LOGCOUNT_FOR_SILVER;
+import static springbook.user.service.CommonUserLevelUpgradePolicy.MIN_RECOMMEND_FOR_GOLD;
 
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.MailSender;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -34,16 +35,19 @@ public class UserServiceTest {
     UserDao userDao;
 
     @Autowired
+    MailSender mailSender;
+
+    @Autowired
     PlatformTransactionManager transactionManager;
 
     @BeforeEach
     public void setUp() {
         users = Arrays.asList(
-            new User("ginseng", "홍상원", "red", Level.BASIC, MIN_LOGCOUNT_FOR_SILVER - 1, 0),
-            new User("moni", "cat", "meow", Level.BASIC, MIN_LOGCOUNT_FOR_SILVER, 0),
-            new User("gu", "신지유", "meow", Level.SILVER, 60, MIN_RECOMMEND_FOR_GOLD - 1),
-            new User("erwins", "신승한", "meow", Level.SILVER, 60, MIN_RECOMMEND_FOR_GOLD),
-            new User("madnite", "강명성", "meow", Level.SILVER, 100, Integer.MAX_VALUE)
+            new User("ginseng", "홍상원", "red", "hsw0130@naver.com", Level.BASIC, MIN_LOGCOUNT_FOR_SILVER - 1, 0),
+            new User("moni", "cat", "meow", "hsw0130@naver.com", Level.BASIC, MIN_LOGCOUNT_FOR_SILVER, 0),
+            new User("gu", "신지유", "meow", "hsw0130@naver.com", Level.SILVER, 60, MIN_RECOMMEND_FOR_GOLD - 1),
+            new User("erwins", "신승한", "meow", "hsw0130@naver.com", Level.SILVER, 60, MIN_RECOMMEND_FOR_GOLD),
+            new User("madnite", "강명성", "meow", "hsw0130@naver.com", Level.SILVER, 100, Integer.MAX_VALUE)
         );
     }
 
@@ -93,6 +97,7 @@ public class UserServiceTest {
         }
         try {
             testUserService.upgradeLevels();
+            testUserService.setMailSender(mailSender);
             fail("TestUserServiceException expected");
         } catch (TestUserServiceException | SQLException e) {
 

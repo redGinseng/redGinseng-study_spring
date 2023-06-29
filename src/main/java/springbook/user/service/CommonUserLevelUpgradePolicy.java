@@ -1,17 +1,22 @@
 package springbook.user.service;
 
-import static springbook.user.service.UserService.MIN_LOGCOUNT_FOR_SILVER;
-import static springbook.user.service.UserService.MIN_RECOMMEND_FOR_GOLD;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import springbook.user.dao.UserDao;
+import springbook.user.dao.UserDaoJdbc;
 import springbook.user.domain.Level;
 import springbook.user.domain.User;
 
 public class CommonUserLevelUpgradePolicy implements UserLevelUpgradePolicy {
 
-    @Autowired
+    public static final int MIN_LOGCOUNT_FOR_SILVER = 50;
+    public static final int MIN_RECOMMEND_FOR_GOLD = 100;
+
     UserDao userDao;
+
+
+    public void setUserDao(UserDaoJdbc userDao) {
+        this.userDao = userDao;
+    }
+
 
     @Override
     public boolean canUpgradeLevel(User user) {
@@ -35,4 +40,5 @@ public class CommonUserLevelUpgradePolicy implements UserLevelUpgradePolicy {
         user.upgradeLevel();
         userDao.update(user);
     }
+
 }
