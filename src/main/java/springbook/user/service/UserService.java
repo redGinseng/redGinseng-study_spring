@@ -33,20 +33,36 @@ public class UserService {
         this.transactionManager = transactionManager;
     }
 
+//    // 트랜잭션과 비지니스 로직이 완벽히 분리된, 서로 관계 없는 코드의 혼재
+//    public void upgradeLevels() throws SQLException {
+//        // 트랜잭션 시작
+//        TransactionStatus status =
+//            this.transactionManager.getTransaction(new DefaultTransactionDefinition());
+//        // 트랜잭션 경계
+//        // 비지니스 로직 시작
+//        try {
+//            List<User> users = userDao.getAll();
+//            for (User user : users) {
+//                if (canUpgradeLevel(user)) {
+//                    upgradeLevel(user);
+//                }
+//            }
+//        // 비지니스 로직 끝
+//        // 트랜잭션 경계
+//            this.transactionManager.commit(status);
+//
+//        } catch (Exception e) {
+//            transactionManager.commit(status);
+//            throw e;
+//        }
+//        // 트랜잭션 끝
+//    }
 
     public void upgradeLevels() throws SQLException {
-        //어차피 Transaction을 다루는 기술도 다 공통적인 측면이 있으니, 추상화 할 수 있지 않을까?
-        //스프링에서 제공하는 방식(JTA)으로 트랜잭션을 제어하는 트랜잭션 경계설정을 써보자
         TransactionStatus status =
             this.transactionManager.getTransaction(new DefaultTransactionDefinition());
-
         try {
-            List<User> users = userDao.getAll();
-            for (User user : users) {
-                if (canUpgradeLevel(user)) {
-                    upgradeLevel(user);
-                }
-            }
+            upgradeLevelsInternal();
             this.transactionManager.commit(status);
 
         } catch (Exception e) {
@@ -54,6 +70,7 @@ public class UserService {
             throw e;
         }
     }
+
 
     protected void upgradeLevel(User user) {
         if (user.getLevel() == Level.BASIC) {
@@ -98,6 +115,16 @@ public class UserService {
 
         mailSender.send(mailMessage);
 
+    }
+
+    private void upgradeLevelsInternal(){
+        List<User> users = userDao.getAll();
+        for (User user : users) {
+            if (canUpgradeLevel(user)) {
+                upgradeLevel(user);
+            }
+        }
+        // 비지니스 로직 끝
     }
 
 }
