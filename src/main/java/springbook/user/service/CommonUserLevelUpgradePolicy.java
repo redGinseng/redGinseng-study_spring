@@ -5,7 +5,7 @@ import springbook.user.dao.UserDaoJdbc;
 import springbook.user.domain.Level;
 import springbook.user.domain.User;
 
-public class CommonUserLevelUpgradePolicy implements UserLevelUpgradePolicy {
+public class CommonUserLevelUpgradePolicy {
 
     public static final int MIN_LOGCOUNT_FOR_SILVER = 50;
     public static final int MIN_RECOMMEND_FOR_GOLD = 100;
@@ -18,7 +18,6 @@ public class CommonUserLevelUpgradePolicy implements UserLevelUpgradePolicy {
     }
 
 
-    @Override
     public boolean canUpgradeLevel(User user) {
         Level currentLevel = user.getLevel();
 
@@ -35,7 +34,6 @@ public class CommonUserLevelUpgradePolicy implements UserLevelUpgradePolicy {
 
     }
 
-    @Override
     public void upgradeLevel(User user) {
         user.upgradeLevel();
         userDao.update(user);

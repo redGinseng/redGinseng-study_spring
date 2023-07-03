@@ -27,13 +27,20 @@ import springbook.user.domain.Level;
 import springbook.user.domain.User;
 import springbook.user.service.UserServiceTest.TestUserService.TestUserServiceException;
 
+
+//UserService가 인터페이스화되고, 이를 구현한 클래스가 두개가 되어서 테스트가 많이 깨진다.
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(locations = "/test-applicationContext.xml")
 public class UserServiceTest {
 
     private List<User> users;
+    // UserService 가 인터페이스라도 상관은 없는데, 구현한 클래스가 두개면 뭘 받아올까?
+    // 아이디가 userService인 빈이 주입될 것이다
     @Autowired
     UserService userService;
+
+    @Autowired
+    UserServiceImpl userServiceImpl;
 
     @Autowired
     UserDao userDao;
@@ -91,20 +98,24 @@ public class UserServiceTest {
 
     @Test
     public void upgradeAllOrNoting() {
-        UserService testUserService = new TestUserService(users.get(3).getId());
+        TestUserService testUserService = new TestUserService(users.get(3).getId());
         testUserService.setUserDao(userDao);
-        testUserService.setTransactionManager(transactionManager);
+        testUserService.setMailSender(mailSender);
+
+        UserServiceTx userServiceTx = new UserServiceTx();
+        userServiceTx.setTransactionManager(transactionManager);
+        userServiceTx.setUserService(testUserService);
 
         userDao.deleteAll();
         for (User user : users) {
             userDao.add(user);
         }
         try {
-            testUserService.upgradeLevels();
+            userServiceTx.upgradeLevels();
             testUserService.setMailSender(mailSender);
             fail("TestUserServiceException expected");
-        } catch (TestUserServiceException | SQLException e) {
-
+        } catch (TestUserServiceException e) {
+            throw e;
         }
 
         checkLevelUpgraded(users.get(1), false);
@@ -121,7 +132,7 @@ public class UserServiceTest {
 
         MockMailSender mockMailSender = new MockMailSender();
         //userService에 dummyMailSender 대신 mockMailSender를 DI
-        userService.setMailSender(mockMailSender);
+        userServiceImpl.setMailSender(mockMailSender);
 
         checkLevelUpgraded(users.get(0), false);
         checkLevelUpgraded(users.get(1), true);
@@ -162,7 +173,7 @@ public class UserServiceTest {
     }
 
 
-    static class TestUserService extends UserService {
+    static class TestUserService extends UserServiceImpl {
 
         private String id;
 
