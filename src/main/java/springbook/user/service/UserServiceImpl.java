@@ -24,7 +24,7 @@ public class UserServiceImpl implements UserService {
         this.mailSender = mailSender;
     }
 
-    private void upgradeLevels() {
+    public void upgradeLevels() {
         List<User> users = userDao.getAll();
         for (User user : users) {
             if (canUpgradeLevel(user)) {
