@@ -125,26 +125,34 @@ public class UserServiceTest {
     @Test
     @DirtiesContext // 컨텍스트의 DI 설정을 변경하는 테스트라는 것을 알려준다.
     public void upgradeLevels() throws Exception {
-        userDao.deleteAll();
-        for (User user : users) {
-            userDao.add(user);
-        }
+        UserServiceImpl userServiceImpl = new UserServiceImpl();
 
+        MockUserDao mockUserDao = new MockUserDao(this.users);
+        userServiceImpl.setUserDao(mockUserDao);
+
+        // 메일 발송 여부 확인을 위해 목 오브젝트 DI
         MockMailSender mockMailSender = new MockMailSender();
-        //userService에 dummyMailSender 대신 mockMailSender를 DI
         userServiceImpl.setMailSender(mockMailSender);
 
-        checkLevelUpgraded(users.get(0), false);
-        checkLevelUpgraded(users.get(1), true);
-        checkLevelUpgraded(users.get(2), false);
-        checkLevelUpgraded(users.get(3), true);
-        checkLevelUpgraded(users.get(4), false);
+        userServiceImpl.upgradeLevels(); // 테스트 대상(sut) 실행
+
+        List<User> updated = mockUserDao.getUpdated();
+
+        assertThat(updated.size(), equalTo(2));
+        checkUserAndLevel(updated.get(0), "ginseng", Level.SILVER);
+        checkUserAndLevel(updated.get(1), "moni", Level.GOLD);
 
         List<String> request = mockMailSender.getRequests();
-        assertThat(request.size(), equalTo(5));
-        //레벨 업그레이드에 성공하면, 메일이 전송되었을 것이다. 메일을 보냈어야할 1,3번째 request에 담긴 이메일 주소 검증
+        assertThat(request.size(), equalTo(2));
         assertThat(request.get(0), equalTo(users.get(1).getEmail()));
         assertThat(request.get(1), equalTo(users.get(3).getEmail()));
+
+    }
+
+
+    public void checkUserAndLevel(User updated, String expectedId, Level expectedLevel) {
+        assertThat(updated.getId(), equalTo(expectedId));
+        assertThat(updated.getLevel(), equalTo(expectedLevel));
     }
 
 
@@ -169,6 +177,52 @@ public class UserServiceTest {
         @Override
         public void send(SimpleMailMessage... simpleMessages) throws MailException {
 
+        }
+    }
+
+    static class MockUserDao implements UserDao {
+
+        private List<User> users;
+        private List<User> updated = new ArrayList<>();
+
+        private MockUserDao(List<User> users) {
+
+        }
+
+        public List<User> getUpdated() {
+            return this.updated;
+        }
+
+        @Override
+        public void add(User user) {
+
+        }
+
+        @Override
+        public User get(String id) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void update(User user) {
+            updated.add(user);
+        }
+
+        @Override
+        public List<User> getAll() {
+            return this.users;
+        }
+
+        @Override
+        public void deleteAll() {
+
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public int getCount() {
+
+            throw new UnsupportedOperationException();
         }
     }
 
