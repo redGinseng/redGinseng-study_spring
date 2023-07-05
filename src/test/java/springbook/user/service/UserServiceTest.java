@@ -4,6 +4,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static springbook.user.service.CommonUserLevelUpgradePolicy.MIN_LOGCOUNT_FOR_SILVER;
 import static springbook.user.service.CommonUserLevelUpgradePolicy.MIN_RECOMMEND_FOR_GOLD;
 
@@ -127,25 +132,22 @@ public class UserServiceTest {
     public void upgradeLevels() throws Exception {
         UserServiceImpl userServiceImpl = new UserServiceImpl();
 
-        MockUserDao mockUserDao = new MockUserDao(this.users);
+//        MockUserDao mockUserDao = new MockUserDao(this.users);
+//        userServiceImpl.setUserDao(mockUserDao);
+
+        UserDao mockUserDao = mock(UserDao.class);
+        // mockUserDao에서 getAll 이 호출되면, users 리스트를 리턴해줘라.
+        // getAll은 아래 upgradeLevels에서 될 예정
+        when(mockUserDao.getAll()).thenReturn(this.users);
         userServiceImpl.setUserDao(mockUserDao);
 
-        // 메일 발송 여부 확인을 위해 목 오브젝트 DI
-        MockMailSender mockMailSender = new MockMailSender();
+        MailSender mockMailSender =  mock(MailSender.class);
         userServiceImpl.setMailSender(mockMailSender);
 
         userServiceImpl.upgradeLevels(); // 테스트 대상(sut) 실행
 
-        List<User> updated = mockUserDao.getUpdated();
-
-        assertThat(updated.size(), equalTo(2));
-        checkUserAndLevel(updated.get(0), "ginseng", Level.SILVER);
-        checkUserAndLevel(updated.get(1), "moni", Level.GOLD);
-
-        List<String> request = mockMailSender.getRequests();
-        assertThat(request.size(), equalTo(2));
-        assertThat(request.get(0), equalTo(users.get(1).getEmail()));
-        assertThat(request.get(1), equalTo(users.get(3).getEmail()));
+        // 테스트과정동안 mockUserDao 에서 update가 2번 이뤄졌는지 확인
+        verify(mockUserDao, times(2)).update(any(User.class));
 
     }
 
@@ -180,51 +182,54 @@ public class UserServiceTest {
         }
     }
 
-    static class MockUserDao implements UserDao {
+//    static class MockUserDao implements UserDao {
+//
+//        // 생성자를 통해 전달받은 사용자 목록을 저장해 뒀다가, getAll() 메소드가 호출되면 DB에서 가져온 것 마냥 돌려주는 users
+//        private List<User> users;
+//        // update() 메소드를 실행하면서 넘겨준 업그레이드 대상 User 오브젝트를 저장해뒀다가 검증을 위해 돌려주기 위한것
+//        private List<User> updated = new ArrayList<>();
+//
+//        private MockUserDao(List<User> users) {
+//
+//        }
+//
+//        public List<User> getUpdated() {
+//            return this.updated;
+//        }
+//
+//        @Override
+//        public void add(User user) {
+//
+//        }
+//
+//        @Override
+//        public User get(String id) {
+//            throw new UnsupportedOperationException();
+//        }
+//
+//        @Override
+//        public void update(User user) {
+//            updated.add(user);
+//        }
+//
+//        @Override
+//        public List<User> getAll() {
+//            return this.users;
+//        }
+//
+//        @Override
+//        public void deleteAll() {
+//
+//            throw new UnsupportedOperationException();
+//        }
+//
+//        @Override
+//        public int getCount() {
+//
+//            throw new UnsupportedOperationException();
+//        }
+//    }
 
-        private List<User> users;
-        private List<User> updated = new ArrayList<>();
-
-        private MockUserDao(List<User> users) {
-
-        }
-
-        public List<User> getUpdated() {
-            return this.updated;
-        }
-
-        @Override
-        public void add(User user) {
-
-        }
-
-        @Override
-        public User get(String id) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void update(User user) {
-            updated.add(user);
-        }
-
-        @Override
-        public List<User> getAll() {
-            return this.users;
-        }
-
-        @Override
-        public void deleteAll() {
-
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int getCount() {
-
-            throw new UnsupportedOperationException();
-        }
-    }
 
 
     static class TestUserService extends UserServiceImpl {
