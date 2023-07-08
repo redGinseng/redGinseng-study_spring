@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import static springbook.user.service.CommonUserLevelUpgradePolicy.MIN_LOGCOUNT_FOR_SILVER;
 import static springbook.user.service.CommonUserLevelUpgradePolicy.MIN_RECOMMEND_FOR_GOLD;
 
+import java.lang.reflect.Proxy;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,13 +40,11 @@ import springbook.user.service.UserServiceTest.TestUserService.TestUserServiceEx
 public class UserServiceTest {
 
     private List<User> users;
-    // UserService 가 인터페이스라도 상관은 없는데, 구현한 클래스가 두개면 뭘 받아올까?
-    // 아이디가 userService인 빈이 주입될 것이다
     @Autowired
-    UserService userService;
+    UserServiceTx userServiceTx;
 
     @Autowired
-    UserServiceImpl userServiceImpl;
+    UserServiceImpl userService;
 
     @Autowired
     UserDao userDao;
@@ -103,25 +102,18 @@ public class UserServiceTest {
 
     @Test
     public void upgradeAllOrNoting() {
+
         TestUserService testUserService = new TestUserService(users.get(3).getId());
         testUserService.setUserDao(userDao);
         testUserService.setMailSender(mailSender);
 
-        UserServiceTx userServiceTx = new UserServiceTx();
-        userServiceTx.setTransactionManager(transactionManager);
-        userServiceTx.setUserService(testUserService);
+        TransactionHandler txHandler = new TransactionHandler();
+        txHandler.setTarget(testUserService);
+        txHandler.setPattern("upgradeLevels");
 
-        userDao.deleteAll();
-        for (User user : users) {
-            userDao.add(user);
-        }
-        try {
-            userServiceTx.upgradeLevels();
-            testUserService.setMailSender(mailSender);
-            fail("TestUserServiceException expected");
-        } catch (TestUserServiceException e) {
-            throw e;
-        }
+        UserService userServiceTx = (UserService) Proxy.newProxyInstance(
+            getClass().getClassLoader(), new Class[]{UserService.class}, txHandler
+        );
 
         checkLevelUpgraded(users.get(1), false);
 
@@ -132,23 +124,15 @@ public class UserServiceTest {
     public void upgradeLevels() throws Exception {
         UserServiceImpl userServiceImpl = new UserServiceImpl();
 
-//        MockUserDao mockUserDao = new MockUserDao(this.users);
-//        userServiceImpl.setUserDao(mockUserDao);
-
         UserDao mockUserDao = mock(UserDao.class);
-        // mockUserDao에서 getAll 이 호출되면, users 리스트를 리턴해줘라.
-        // getAll은 아래 upgradeLevels에서 될 예정
         when(mockUserDao.getAll()).thenReturn(this.users);
         userServiceImpl.setUserDao(mockUserDao);
 
-        MailSender mockMailSender =  mock(MailSender.class);
+        MailSender mockMailSender = mock(MailSender.class);
         userServiceImpl.setMailSender(mockMailSender);
-
         userServiceImpl.upgradeLevels(); // 테스트 대상(sut) 실행
 
-        // 테스트과정동안 mockUserDao 에서 update가 2번 이뤄졌는지 확인
         verify(mockUserDao, times(2)).update(any(User.class));
-
     }
 
 
@@ -181,55 +165,6 @@ public class UserServiceTest {
 
         }
     }
-
-//    static class MockUserDao implements UserDao {
-//
-//        // 생성자를 통해 전달받은 사용자 목록을 저장해 뒀다가, getAll() 메소드가 호출되면 DB에서 가져온 것 마냥 돌려주는 users
-//        private List<User> users;
-//        // update() 메소드를 실행하면서 넘겨준 업그레이드 대상 User 오브젝트를 저장해뒀다가 검증을 위해 돌려주기 위한것
-//        private List<User> updated = new ArrayList<>();
-//
-//        private MockUserDao(List<User> users) {
-//
-//        }
-//
-//        public List<User> getUpdated() {
-//            return this.updated;
-//        }
-//
-//        @Override
-//        public void add(User user) {
-//
-//        }
-//
-//        @Override
-//        public User get(String id) {
-//            throw new UnsupportedOperationException();
-//        }
-//
-//        @Override
-//        public void update(User user) {
-//            updated.add(user);
-//        }
-//
-//        @Override
-//        public List<User> getAll() {
-//            return this.users;
-//        }
-//
-//        @Override
-//        public void deleteAll() {
-//
-//            throw new UnsupportedOperationException();
-//        }
-//
-//        @Override
-//        public int getCount() {
-//
-//            throw new UnsupportedOperationException();
-//        }
-//    }
-
 
 
     static class TestUserService extends UserServiceImpl {
