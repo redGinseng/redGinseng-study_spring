@@ -12,7 +12,6 @@ import static org.mockito.Mockito.when;
 import static springbook.user.service.CommonUserLevelUpgradePolicy.MIN_LOGCOUNT_FOR_SILVER;
 import static springbook.user.service.CommonUserLevelUpgradePolicy.MIN_RECOMMEND_FOR_GOLD;
 
-import java.lang.reflect.Proxy;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.mail.MailException;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
@@ -38,6 +38,10 @@ import springbook.user.service.UserServiceTest.TestUserService.TestUserServiceEx
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(locations = "/test-applicationContext.xml")
 public class UserServiceTest {
+
+
+    @Autowired
+    ApplicationContext context;
 
     private List<User> users;
     @Autowired
@@ -101,21 +105,32 @@ public class UserServiceTest {
     }
 
     @Test
-    public void upgradeAllOrNoting() {
+    @DirtiesContext
+    public void upgradeAllOrNoting() throws Exception {
 
         TestUserService testUserService = new TestUserService(users.get(3).getId());
         testUserService.setUserDao(userDao);
         testUserService.setMailSender(mailSender);
 
-        TransactionHandler txHandler = new TransactionHandler();
-        txHandler.setTarget(testUserService);
-        txHandler.setPattern("upgradeLevels");
+        TxProxyFactoryBean txProxyFactoryBean =
+            context.getBean("&userService", TxProxyFactoryBean.class);
+        txProxyFactoryBean.setTarget(testUserService);
+        UserService txUserService = (UserService) txProxyFactoryBean.getObject();
 
-        UserService userServiceTx = (UserService) Proxy.newProxyInstance(
-            getClass().getClassLoader(), new Class[]{UserService.class}, txHandler
-        );
+        userDao.deleteAll();
+        for (User user : users) {
+            userDao.add(user);
+        }
+
+        try {
+            txUserService.upgradeLevels();
+            fail("TestUserService Exception expected");
+        } catch (TestUserServiceException e) {
+
+        }
 
         checkLevelUpgraded(users.get(1), false);
+
 
     }
 
