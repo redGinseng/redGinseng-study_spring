@@ -113,7 +113,7 @@ public class UserServiceTest {
         testUserService.setMailSender(mailSender);
 
         TxProxyFactoryBean txProxyFactoryBean =
-            context.getBean("&userService", TxProxyFactoryBean.class);
+            context.getBean("userService", TxProxyFactoryBean.class);
         txProxyFactoryBean.setTarget(testUserService);
         UserService txUserService = (UserService) txProxyFactoryBean.getObject();
 

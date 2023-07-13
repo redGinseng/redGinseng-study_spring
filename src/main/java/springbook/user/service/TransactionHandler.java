@@ -32,6 +32,8 @@ public class TransactionHandler implements InvocationHandler {
         // 요청을 넘겨줄 타겟을, Object로 선언한 덕에
         // 핵심 로직을 처리하는 타겟에게 바로 안 넘기고, 다른 프록시에 넘겨도 되겠구나
 
+        //pattern을 "get"으로 주면 "get"으로 시작하는 모든 메소드에 트랜잭션이 적용된다.
+        //
         if (method.getName().startsWith(pattern)) {
             return invokeInTransaction(method, args);
         } else {
